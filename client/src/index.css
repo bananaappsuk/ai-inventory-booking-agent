@@ -1,0 +1,566 @@
+:root {
+  --bg: #f7f7f9;
+  --surface: #ffffff;
+  --border: #e2e2e7;
+  --text: #1c1c22;
+  --muted: #6b6b76;
+  --primary: #2f6feb;
+  --primary-hover: #2557c0;
+  --danger: #c0392b;
+  --warning: #b8860b;
+  --radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+button:hover,
+.button:hover {
+  background: var(--primary-hover);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-header .brand {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.app-header nav {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-chip {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.app-main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.page-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.auth-form {
+  width: 100%;
+  max-width: 360px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--surface);
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.form-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #eef1fb;
+  color: var(--primary);
+  margin-left: 0.4rem;
+}
+
+.badge-warning {
+  background: #fdf3d6;
+  color: var(--warning);
+}
+
+.badge-count {
+  background: var(--danger);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  padding: 0.05rem 0.4rem;
+  margin-left: 0.3rem;
+}
+
+.status-pending {
+  color: #b8860b;
+}
+.status-approved {
+  color: #2e7d32;
+}
+.status-rejected {
+  color: var(--danger);
+}
+.status-picked_up {
+  color: #2f6feb;
+}
+.status-drop_submitted {
+  color: #8e44ad;
+}
+.status-completed {
+  color: #2e7d32;
+}
+.status-cancelled {
+  color: var(--muted);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.inventory-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.inventory-card.is-hidden {
+  opacity: 0.6;
+}
+
+.inventory-card-photo {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  background: var(--bg);
+}
+
+.inventory-card-photo.placeholder {
+  display: flex;
+}
+
+.inventory-card-body {
+  padding: 0.75rem;
+}
+
+.booking-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.booking-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem;
+  color: var(--text);
+}
+
+.booking-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+}
+
+.item-picker-row input {
+  width: 70px;
+}
+
+.checklist-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.checklist-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.checklist-row-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.checklist-row-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.note-label {
+  width: 100%;
+}
+
+.photo-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.photo-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.photo-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.photo-thumb button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--danger);
+  line-height: 1;
+}
+
+.action-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-actions {
+  background: #fff8e6;
+  border: 1px solid #f1e2ad;
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.notification-bell {
+  position: relative;
+}
+
+.notification-panel {
+  position: absolute;
+  right: 0;
+  top: 2.2rem;
+  width: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+}
+
+.notification-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.notification-panel ul,
+.notification-list-full {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.notification-panel li button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  color: var(--text);
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.notification-panel li.unread button,
+.notification-list-full li.unread {
+  background: #eef1fb;
+}
+
+.notification-list-full li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+
+.chat-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.chat-widget {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 340px;
+  max-height: 500px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+}
+
+.chat-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-widget-header button {
+  background: none;
+  color: var(--muted);
+  padding: 0;
+  font-size: 1.1rem;
+}
+
+.chat-widget-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 200px;
+}
+
+.chat-bubble {
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  max-width: 90%;
+  font-size: 0.85rem;
+}
+
+.chat-bubble-user {
+  align-self: flex-end;
+  background: var(--primary);
+  color: #fff;
+}
+
+.chat-bubble-assistant {
+  align-self: flex-start;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.chat-tool-indicator {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.chat-confirmation {
+  background: #fff8e6;
+  border: 1px solid #f1e2ad;
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-size: 0.85rem;
+}
+
+.chat-confirmation-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.chat-widget-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.chat-widget-input input {
+  flex: 1;
+}
+
+.booking-details-page,
+.book-inventory-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
