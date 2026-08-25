@@ -19,6 +19,7 @@ export function Layout() {
             <>
               <Link to="/admin/inventory">Manage Inventory</Link>
               <Link to="/admin/check-inventory">Check Inventory</Link>
+              <Link to="/admin/users">Approve Users</Link>
             </>
           )}
         </nav>

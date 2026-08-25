@@ -1,4 +1,5 @@
 import { PhotoUploader } from "../common/PhotoUploader";
+import { NumberField } from "../common/NumberField";
 import type { Condition, Photo } from "../../types";
 
 const CONDITION_OPTIONS: { value: Condition; label: string }[] = [
@@ -60,13 +61,7 @@ export function ChecklistItemRow(props: Props) {
           </label>
           <label>
             Quantity {quantityLabel} (of {props.bookedQuantity})
-            <input
-              type="number"
-              min={0}
-              max={props.bookedQuantity}
-              value={props.quantity}
-              onChange={(e) => props.onQuantityChange(Number(e.target.value))}
-            />
+            <NumberField min={0} max={props.bookedQuantity} value={props.quantity} onChange={props.onQuantityChange} />
           </label>
         </div>
       )}

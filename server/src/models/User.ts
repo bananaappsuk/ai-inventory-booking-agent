@@ -7,7 +7,10 @@ const userSchema = new Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["admin", "user"], default: "user", index: true },
     phone: { type: String, trim: true },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    // Self-signup accounts start "pending" and need admin approval before they can log in.
+    // Accounts created any other way (seed script, admin bootstrap) default to "approved".
+    status: { type: String, enum: ["pending", "approved", "rejected"], default: "approved", index: true }
   },
   { timestamps: true }
 );

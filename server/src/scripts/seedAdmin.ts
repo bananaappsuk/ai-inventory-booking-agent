@@ -12,7 +12,7 @@ async function main(): Promise<void> {
 
   const admin = await User.findOneAndUpdate(
     { email },
-    { $set: { name: "Admin", email, passwordHash, role: "admin", isActive: true } },
+    { $set: { name: "Admin", email, passwordHash, role: "admin", isActive: true, status: "approved" } },
     { upsert: true, new: true }
   );
 

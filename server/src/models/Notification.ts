@@ -7,7 +7,12 @@ export const NOTIFICATION_TYPES = [
   "pickup_reminder",
   "dropoff_reminder",
   "drop_submitted_admin_alert",
-  "drop_approved"
+  "drop_approved",
+  "user_signup_admin_alert",
+  "user_approved",
+  "user_rejected",
+  "booking_upcoming_reminder",
+  "drop_overdue_admin_alert"
 ] as const;
 
 const notificationSchema = new Schema(

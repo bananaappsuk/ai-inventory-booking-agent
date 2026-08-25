@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { inventoryApi } from "../../api/inventory.api";
 import { PhotoUploader } from "../common/PhotoUploader";
+import { NumberField } from "../common/NumberField";
 import type { InventoryItem } from "../../types";
 
 export function InventoryItemForm({
@@ -56,13 +57,7 @@ export function InventoryItemForm({
       </label>
       <label>
         Total quantity
-        <input
-          type="number"
-          min={0}
-          value={totalQuantity}
-          onChange={(e) => setTotalQuantity(Number(e.target.value))}
-          required
-        />
+        <NumberField min={0} value={totalQuantity} onChange={setTotalQuantity} required />
       </label>
 
       {item ? (

@@ -13,12 +13,15 @@ export type Condition = "good" | "wear_and_tear" | "needs_replacement" | "major_
 
 export type Session = "AM" | "PM";
 
+export type UserStatus = "pending" | "approved" | "rejected";
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
   phone?: string;
+  status: UserStatus;
 }
 
 export interface Photo {

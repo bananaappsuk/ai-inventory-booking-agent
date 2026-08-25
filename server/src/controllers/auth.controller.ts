@@ -30,3 +30,18 @@ export const adminBootstrap = asyncHandler(async (req: Request, res: Response) =
   });
   res.status(201).json(user);
 });
+
+export const listPendingUsers = asyncHandler(async (_req: Request, res: Response) => {
+  const users = await authService.listPendingUsers();
+  res.json(users);
+});
+
+export const approveUser = asyncHandler(async (req: Request, res: Response) => {
+  const user = await authService.approveUser(req.params.id);
+  res.json(user);
+});
+
+export const rejectUser = asyncHandler(async (req: Request, res: Response) => {
+  const user = await authService.rejectUser(req.params.id);
+  res.json(user);
+});

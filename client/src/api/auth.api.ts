@@ -6,9 +6,14 @@ export interface AuthResult {
   user: User;
 }
 
+export interface SignupResult {
+  pending: true;
+  message: string;
+}
+
 export const authApi = {
   signup: (data: { name: string; email: string; password: string; phone?: string }) =>
-    api.post<AuthResult>("/auth/signup", data),
+    api.post<SignupResult>("/auth/signup", data),
   login: (data: { email: string; password: string }) => api.post<AuthResult>("/auth/login", data),
   me: () => api.get<User>("/auth/me")
 };

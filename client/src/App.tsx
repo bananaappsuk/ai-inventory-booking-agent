@@ -14,6 +14,7 @@ import { AdminCheckInventoryPage } from "./pages/AdminCheckInventoryPage";
 import { AdminDropApprovalPage } from "./pages/AdminDropApprovalPage";
 import { AdminInventoryListPage } from "./pages/AdminInventoryListPage";
 import { AdminInventoryFormPage } from "./pages/AdminInventoryFormPage";
+import { AdminApproveUsersPage } from "./pages/AdminApproveUsersPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
                 <Route path="/notifications" element={<NotificationsPage />} />
 
                 <Route element={<ProtectedRoute role="admin" />}>
+                  <Route path="/admin/users" element={<AdminApproveUsersPage />} />
                   <Route path="/admin/check-inventory" element={<AdminCheckInventoryPage />} />
                   <Route path="/admin/check-inventory/:id" element={<AdminDropApprovalPage />} />
                   <Route path="/admin/inventory" element={<AdminInventoryListPage />} />

@@ -5,6 +5,7 @@ import { ApiError } from "../utils/apiError.js";
 import type { Role } from "../middleware/auth.js";
 import { notify } from "./notification.service.js";
 import { User } from "../models/User.js";
+import { checkAvailability } from "./inventory.service.js";
 
 export interface CreateBookingParams {
   eventTitle: string;
@@ -53,9 +54,30 @@ export async function createBooking(params: CreateBookingParams) {
     return { inventoryItem: doc._id, nameSnapshot: doc.name, quantity: line.quantity };
   });
 
+  const eventDate = normalizeDate(params.eventDate);
+  const overbooked: string[] = [];
+  for (const line of items) {
+    const availability = await checkAvailability({
+      itemId: line.inventoryItem.toString(),
+      date: eventDate,
+      session: params.session
+    });
+    if (line.quantity > availability.available) {
+      overbooked.push(
+        `${line.nameSnapshot}: requested ${line.quantity}, only ${Math.max(availability.available, 0)} available`
+      );
+    }
+  }
+  if (overbooked.length > 0) {
+    throw ApiError.conflict(
+      `Not enough inventory available for ${eventDate.toDateString()} (${params.session}) — another booking already ` +
+        `covers that day: ${overbooked.join("; ")}.`
+    );
+  }
+
   const booking = await Booking.create({
     eventTitle: params.eventTitle,
-    eventDate: normalizeDate(params.eventDate),
+    eventDate,
     session: params.session,
     bookedBy,
     createdBy: params.requester.id,

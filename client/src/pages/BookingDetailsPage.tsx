@@ -73,7 +73,8 @@ export function BookingDetailsPage() {
   }
 
   async function cancel() {
-    if (!id) return;
+    if (!id || !booking) return;
+    if (!confirm(`Cancel the booking "${booking.eventTitle}"? This cannot be undone.`)) return;
     setBusy(true);
     try {
       await bookingApi.cancel(id);

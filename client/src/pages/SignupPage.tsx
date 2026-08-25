@@ -1,29 +1,43 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export function SignupPage() {
   const { signup } = useAuth();
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      await signup(name, email, password, phone || undefined);
-      navigate("/");
+      const message = await signup(name, email, password, phone || undefined);
+      setPendingMessage(message);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (pendingMessage) {
+    return (
+      <div className="auth-page">
+        <div className="form auth-form">
+          <h1>Almost there</h1>
+          <p>{pendingMessage}</p>
+          <p className="hint">
+            <Link to="/login">Back to log in</Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
