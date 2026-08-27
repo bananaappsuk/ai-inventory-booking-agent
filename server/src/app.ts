@@ -1,3 +1,5 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
@@ -18,7 +20,23 @@ import chatRoutes from "./routes/chat.routes.js";
 export function createApp(): Express {
   const app = express();
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      // Only bites once the built client is served from this same app (production) — the Vite
+      // dev server isn't behind this middleware at all in local dev. Relaxed to allow the
+      // Google Fonts stylesheets/files the client links to, and inline styles some UI
+      // libraries (FullCalendar) set via the style attribute.
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          "style-src": ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+          // data: is needed for FullCalendar's bundled "fcicons" icon font, embedded as a
+          // base64 data URI in its own stylesheet.
+          "font-src": ["'self'", "https://fonts.gstatic.com", "data:"]
+        }
+      }
+    })
+  );
   app.use(cors({ origin: env.clientUrl, credentials: true }));
   app.use(express.json());
 
@@ -35,6 +53,18 @@ export function createApp(): Express {
   app.use("/api/uploads", uploadRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/chat", chatRoutes);
+
+  // Single-service deploy: serve the built React app for every non-API path, with an SPA
+  // fallback to index.html so client-side routes (e.g. /bookings/123) resolve on a hard
+  // refresh. No-op in local dev, where the Vite dev server serves the client separately.
+  if (env.nodeEnv === "production") {
+    const clientDistPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../client/dist");
+    app.use(express.static(clientDistPath));
+    app.use((req, res, next) => {
+      if (req.path.startsWith("/api")) return next();
+      res.sendFile(path.join(clientDistPath, "index.html"));
+    });
+  }
 
   app.use(errorHandler);
 

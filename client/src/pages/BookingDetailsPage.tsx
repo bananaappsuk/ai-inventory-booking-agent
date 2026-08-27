@@ -2,10 +2,16 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { bookingApi } from "../api/booking.api";
 import { useAuth } from "../context/AuthContext";
-import type { Booking } from "../types";
+import { RejectBookingModal } from "../components/booking/RejectBookingModal";
+import { EditBookingModal } from "../components/booking/EditBookingModal";
+import type { Booking, BookingItemLine } from "../types";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.toDateString() === b.toDateString();
+}
+
+function itemId(line: BookingItemLine): string {
+  return typeof line.inventoryItem === "string" ? line.inventoryItem : line.inventoryItem._id;
 }
 
 const CONDITION_LABELS: Record<string, string> = {
@@ -15,6 +21,16 @@ const CONDITION_LABELS: Record<string, string> = {
   major_damage: "Major damage to inventory"
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Pending approval",
+  approved: "Approved",
+  rejected: "Rejected",
+  picked_up: "Picked up",
+  drop_submitted: "Drop submitted",
+  completed: "Completed",
+  cancelled: "Cancelled"
+};
+
 export function BookingDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -22,7 +38,8 @@ export function BookingDetailsPage() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [rejectNote, setRejectNote] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -49,24 +66,12 @@ export function BookingDetailsPage() {
   async function approve() {
     if (!id) return;
     setBusy(true);
+    setError(null);
     try {
       await bookingApi.approve(id);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to approve");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function reject() {
-    if (!id || !rejectNote.trim()) return;
-    setBusy(true);
-    try {
-      await bookingApi.reject(id, rejectNote);
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reject");
     } finally {
       setBusy(false);
     }
@@ -78,7 +83,7 @@ export function BookingDetailsPage() {
     setBusy(true);
     try {
       await bookingApi.cancel(id);
-      navigate("/");
+      navigate("/bookings");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to cancel");
     } finally {
@@ -88,21 +93,89 @@ export function BookingDetailsPage() {
 
   return (
     <div className="booking-details-page">
-      <h1>{booking.eventTitle}</h1>
-      <p className="muted">
-        {eventDate.toDateString()} &middot; {booking.session} &middot; status: {booking.status}
-      </p>
+      <div className="booking-details-header">
+        <h1>{booking.eventTitle}</h1>
+        {isAdmin && booking.status === "pending" && (
+          <div className="action-row">
+            <button type="button" onClick={approve} disabled={busy}>
+              Approve
+            </button>
+            <button type="button" className="secondary" onClick={() => setShowRejectModal(true)} disabled={busy}>
+              Reject
+            </button>
+          </div>
+        )}
+      </div>
+
+      <section>
+        <div className="detail-grid">
+          <div className="field">
+            <span className="field-label">Title</span>
+            <p>{booking.eventTitle}</p>
+          </div>
+          <div className="field">
+            <span className="field-label">Date</span>
+            <p>{eventDate.toDateString()}</p>
+          </div>
+          <div className="field">
+            <span className="field-label">Session</span>
+            <p>{booking.session}</p>
+          </div>
+          <div className="field">
+            <span className="field-label">Status</span>
+            <p>
+              <span className={`badge status-${booking.status}`}>{STATUS_LABELS[booking.status]}</span>
+              {booking.approval?.decisionMaker === "ai" && <span className="badge badge-ai">AI</span>}
+            </p>
+          </div>
+        </div>
+      </section>
 
       <section>
         <h2>Items</h2>
-        <ul>
-          {booking.items.map((line) => (
-            <li key={line.inventoryItem}>
-              {line.nameSnapshot} &times; {line.quantity}
-            </li>
-          ))}
-        </ul>
+        <div className="booking-item-list">
+          {booking.items.map((line) => {
+            const populated = typeof line.inventoryItem === "object" ? line.inventoryItem : null;
+            const imageUrl = populated?.images?.[0]?.url;
+            return (
+              <div key={itemId(line)} className="booking-item-row">
+                {imageUrl ? (
+                  <img src={imageUrl} alt={line.nameSnapshot} className="booking-item-thumb" />
+                ) : (
+                  <div className="booking-item-thumb placeholder" />
+                )}
+                <div className="booking-item-info">
+                  <strong>{line.nameSnapshot}</strong>
+                  {populated?.category && <span className="badge">{populated.category}</span>}
+                </div>
+                <span className="booking-item-qty">&times; {line.quantity}</span>
+              </div>
+            );
+          })}
+        </div>
       </section>
+
+      {booking.ai?.reason && (
+        <section>
+          <h2>AI review</h2>
+          {booking.ai.recommendation && (
+            <p>
+              Recommendation: <strong>{booking.ai.recommendation}</strong>
+              {booking.ai.confidence !== undefined && ` (${Math.round(booking.ai.confidence * 100)}% confidence)`}
+            </p>
+          )}
+          <p>{booking.ai.reason}</p>
+          {booking.ai.ruleResults.length > 0 && (
+            <ul>
+              {booking.ai.ruleResults.map((r) => (
+                <li key={r.ruleType}>
+                  {r.passed ? "✓" : "✗"} {r.detail}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {error && <p className="error-text">{error}</p>}
 
@@ -110,30 +183,16 @@ export function BookingDetailsPage() {
         {canPickup && <Link to={`/bookings/${booking._id}/pickup`} className="button">Pickup</Link>}
         {canDrop && <Link to={`/bookings/${booking._id}/drop`} className="button">Drop off</Link>}
         {isOwner && booking.status === "pending" && (
-          <button type="button" onClick={cancel} disabled={busy}>
-            Cancel booking
-          </button>
+          <>
+            <button type="button" className="secondary" onClick={() => setShowEditModal(true)} disabled={busy}>
+              Edit
+            </button>
+            <button type="button" onClick={cancel} disabled={busy}>
+              Cancel booking
+            </button>
+          </>
         )}
       </div>
-
-      {isAdmin && booking.status === "pending" && (
-        <section className="admin-actions">
-          <h2>Admin: approve booking</h2>
-          <button type="button" onClick={approve} disabled={busy}>
-            Approve
-          </button>
-          <div className="form-row">
-            <input
-              placeholder="Rejection reason"
-              value={rejectNote}
-              onChange={(e) => setRejectNote(e.target.value)}
-            />
-            <button type="button" onClick={reject} disabled={busy || !rejectNote.trim()}>
-              Reject
-            </button>
-          </div>
-        </section>
-      )}
 
       {booking.pickup && booking.pickup.items.length > 0 && (
         <section>
@@ -189,6 +248,18 @@ export function BookingDetailsPage() {
             ))}
           </ul>
         </section>
+      )}
+
+      {showRejectModal && (
+        <RejectBookingModal
+          booking={booking}
+          onClose={() => setShowRejectModal(false)}
+          onRejected={refresh}
+        />
+      )}
+
+      {showEditModal && (
+        <EditBookingModal booking={booking} onClose={() => setShowEditModal(false)} onSaved={refresh} />
       )}
     </div>
   );

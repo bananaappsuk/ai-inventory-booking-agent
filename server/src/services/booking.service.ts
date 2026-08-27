@@ -6,6 +6,7 @@ import type { Role } from "../middleware/auth.js";
 import { notify } from "./notification.service.js";
 import { User } from "../models/User.js";
 import { checkAvailability } from "./inventory.service.js";
+import { runBookingApprovalPipeline } from "../agents/bookingApproval/pipeline.js";
 
 export interface CreateBookingParams {
   eventTitle: string;
@@ -85,18 +86,51 @@ export async function createBooking(params: CreateBookingParams) {
     items
   });
 
+  const outcome = await runBookingApprovalPipeline(booking).catch((err) => ({
+    action: "error" as const,
+    ruleResults: [],
+    reason: err instanceof Error ? err.message : String(err)
+  }));
+  if (outcome.action !== "error") {
+    await booking.save();
+  }
+
   const admins = await User.find({ role: "admin" }).select("_id");
-  await Promise.all(
-    admins.map((admin) =>
-      notify({
-        userId: admin._id.toString(),
-        type: "booking_created_admin_alert",
-        title: "New booking awaiting approval",
-        message: `${params.eventTitle} on ${booking.eventDate.toDateString()} (${params.session}) needs approval.`,
-        relatedBooking: booking._id.toString()
-      })
-    )
-  );
+
+  if (outcome.action === "auto_approved") {
+    await notify({
+      userId: booking.bookedBy.toString(),
+      type: "booking_auto_approved",
+      title: "Booking auto-approved",
+      message: `Your booking "${params.eventTitle}" on ${booking.eventDate.toDateString()} (${params.session}) was automatically approved. ${outcome.reason}`,
+      relatedBooking: booking._id.toString()
+    });
+    await Promise.all(
+      admins.map((admin) =>
+        notify({
+          userId: admin._id.toString(),
+          type: "booking_auto_approved_admin_alert",
+          title: "Booking auto-approved by AI",
+          message: `"${params.eventTitle}" (booked by user) on ${booking.eventDate.toDateString()} (${params.session}) was auto-approved. ${outcome.reason}`,
+          relatedBooking: booking._id.toString()
+        })
+      )
+    );
+  } else {
+    // Unchanged from before the AI pipeline existed — every non-auto-approved booking still
+    // routes to the normal manual-review admin alert, whether or not the pipeline ran at all.
+    await Promise.all(
+      admins.map((admin) =>
+        notify({
+          userId: admin._id.toString(),
+          type: "booking_created_admin_alert",
+          title: "New booking awaiting approval",
+          message: `${params.eventTitle} on ${booking.eventDate.toDateString()} (${params.session}) needs approval.`,
+          relatedBooking: booking._id.toString()
+        })
+      )
+    );
+  }
 
   return booking;
 }
@@ -107,6 +141,7 @@ export async function listBookings(params: {
   from?: string;
   to?: string;
   mine?: boolean;
+  decisionMaker?: "human" | "ai";
 }) {
   const filter: Record<string, unknown> = {};
 
@@ -114,6 +149,7 @@ export async function listBookings(params: {
     filter.bookedBy = params.requester.id;
   }
   if (params.status) filter.status = params.status;
+  if (params.decisionMaker) filter["approval.decisionMaker"] = params.decisionMaker;
   if (params.from || params.to) {
     filter.eventDate = {
       ...(params.from ? { $gte: new Date(params.from) } : {}),
@@ -125,7 +161,9 @@ export async function listBookings(params: {
 }
 
 export async function getBookingById(id: string, requester: { id: string; role: Role }) {
-  const booking = await Booking.findById(id).populate("bookedBy", "name email");
+  const booking = await Booking.findById(id)
+    .populate("bookedBy", "name email")
+    .populate("items.inventoryItem", "name images category");
   if (!booking) throw ApiError.notFound("Booking not found");
   assertOwnerOrAdmin(booking, requester);
   return booking;
@@ -148,6 +186,26 @@ export async function updateBooking(
   if (updates.eventDate !== undefined) booking.eventDate = normalizeDate(updates.eventDate);
   if (updates.session !== undefined) booking.session = updates.session;
 
+  // Only eventDate/session affect what the deterministic gates saw — re-run the pipeline when
+  // either changes on a still-pending booking; an eventTitle-only edit skips it (no wasted call).
+  const dateOrSessionChanged = updates.eventDate !== undefined || updates.session !== undefined;
+  if (booking.status === "pending" && dateOrSessionChanged) {
+    const outcome = await runBookingApprovalPipeline(booking).catch((err) => ({
+      action: "error" as const,
+      ruleResults: [],
+      reason: err instanceof Error ? err.message : String(err)
+    }));
+    if (outcome.action === "auto_approved") {
+      await notify({
+        userId: booking.bookedBy.toString(),
+        type: "booking_auto_approved",
+        title: "Booking auto-approved",
+        message: `Your updated booking "${booking.eventTitle}" was automatically approved. ${outcome.reason}`,
+        relatedBooking: booking._id.toString()
+      });
+    }
+  }
+
   await booking.save();
   return booking;
 }
@@ -158,7 +216,7 @@ export async function approveBooking(id: string, adminId: string, note?: string)
   if (booking.status !== "pending") throw ApiError.conflict("Only pending bookings can be approved");
 
   booking.status = "approved";
-  booking.approval = { decidedBy: new Types.ObjectId(adminId), decidedAt: new Date(), note };
+  booking.approval = { decidedBy: new Types.ObjectId(adminId), decidedAt: new Date(), note, decisionMaker: "human" };
   await booking.save();
 
   await notify({
@@ -178,7 +236,7 @@ export async function rejectBooking(id: string, adminId: string, note: string) {
   if (booking.status !== "pending") throw ApiError.conflict("Only pending bookings can be rejected");
 
   booking.status = "rejected";
-  booking.approval = { decidedBy: new Types.ObjectId(adminId), decidedAt: new Date(), note };
+  booking.approval = { decidedBy: new Types.ObjectId(adminId), decidedAt: new Date(), note, decisionMaker: "human" };
   await booking.save();
 
   await notify({

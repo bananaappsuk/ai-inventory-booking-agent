@@ -13,6 +13,8 @@ export interface PublicUser {
   role: Role;
   phone?: string;
   status: "pending" | "approved" | "rejected";
+  isActive: boolean;
+  createdAt: string;
 }
 
 function toPublicUser(user: UserDoc): PublicUser {
@@ -22,7 +24,9 @@ function toPublicUser(user: UserDoc): PublicUser {
     email: user.email,
     role: user.role as Role,
     phone: user.phone ?? undefined,
-    status: user.status as "pending" | "approved" | "rejected"
+    status: user.status as "pending" | "approved" | "rejected",
+    isActive: user.isActive,
+    createdAt: (user as unknown as { createdAt: Date }).createdAt.toISOString()
   };
 }
 
@@ -117,6 +121,46 @@ export async function adminBootstrap(params: {
 export async function listPendingUsers() {
   const users = await User.find({ status: "pending" }).sort({ createdAt: 1 });
   return users.map(toPublicUser);
+}
+
+export async function listAllUsers() {
+  const users = await User.find().sort({ createdAt: -1 });
+  return users.map(toPublicUser);
+}
+
+export async function setUserActive(id: string, isActive: boolean, requesterId: string) {
+  if (id === requesterId && !isActive) {
+    throw ApiError.badRequest("You cannot deactivate your own account");
+  }
+  const user = await User.findById(id);
+  if (!user) throw ApiError.notFound("User not found");
+  user.isActive = isActive;
+  await user.save();
+  return toPublicUser(user);
+}
+
+export async function adminCreateUser(params: {
+  name: string;
+  email: string;
+  password: string;
+  role?: Role;
+  phone?: string;
+}) {
+  const existing = await User.findOne({ email: params.email.toLowerCase() });
+  if (existing) {
+    throw ApiError.conflict("An account with this email already exists");
+  }
+  const passwordHash = await bcrypt.hash(params.password, SALT_ROUNDS);
+  const user = await User.create({
+    name: params.name,
+    email: params.email.toLowerCase(),
+    passwordHash,
+    phone: params.phone,
+    role: params.role ?? "user",
+    status: "approved",
+    isActive: true
+  });
+  return toPublicUser(user);
 }
 
 export async function approveUser(id: string) {

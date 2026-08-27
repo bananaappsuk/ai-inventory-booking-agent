@@ -9,10 +9,11 @@ export const bookingApi = {
     items: { inventoryItem: string; quantity: number }[];
     bookedByUserId?: string;
   }) => api.post<Booking>("/bookings", data),
-  list: (params: { status?: BookingStatus; mine?: boolean } = {}) => {
+  list: (params: { status?: BookingStatus; mine?: boolean; decisionMaker?: "human" | "ai" } = {}) => {
     const qs = new URLSearchParams();
     if (params.status) qs.set("status", params.status);
     if (params.mine) qs.set("mine", "true");
+    if (params.decisionMaker) qs.set("decisionMaker", params.decisionMaker);
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return api.get<Booking[]>(`/bookings${suffix}`);
   },

@@ -1,4 +1,5 @@
 import { Schema, model, Types, type InferSchemaType } from "mongoose";
+import { RULE_TYPES } from "./ApprovalRule.js";
 
 export const BOOKING_STATUSES = [
   "pending",
@@ -64,6 +65,15 @@ const dropApprovalItemSchema = new Schema(
   { _id: false }
 );
 
+const aiRuleResultSchema = new Schema(
+  {
+    ruleType: { type: String, enum: RULE_TYPES, required: true },
+    passed: { type: Boolean, required: true },
+    detail: { type: String, required: true }
+  },
+  { _id: false }
+);
+
 const bookingSchema = new Schema(
   {
     eventTitle: { type: String, required: true, trim: true },
@@ -80,7 +90,12 @@ const bookingSchema = new Schema(
     approval: {
       decidedBy: { type: Schema.Types.ObjectId, ref: "User" },
       decidedAt: Date,
-      note: String
+      note: String,
+      // "ai" when runBookingApprovalPipeline auto-approved this booking; "human" for every
+      // admin-driven approve/reject/override. Defaults to "human" so pre-existing bookings
+      // and any path that doesn't explicitly set it stay correctly attributed.
+      decisionMaker: { type: String, enum: ["human", "ai"], default: "human" },
+      overriddenFrom: { type: String, enum: BOOKING_STATUSES }
     },
 
     pickup: {
@@ -104,12 +119,23 @@ const bookingSchema = new Schema(
       overallNote: String,
       adminPhotos: { type: [photoSchema], default: [] },
       items: { type: [dropApprovalItemSchema], default: [] }
+    },
+
+    // Denormalized snapshot of the most recent auto-approval pipeline run, for cheap reads on
+    // list/detail pages. AiActionLog is the source-of-truth audit trail of every run.
+    ai: {
+      recommendation: { type: String, enum: ["approve", "reject"] },
+      confidence: { type: Number, min: 0, max: 1 },
+      reason: String,
+      ruleResults: { type: [aiRuleResultSchema], default: [] },
+      evaluatedAt: Date
     }
   },
   { timestamps: true }
 );
 
 bookingSchema.index({ eventDate: 1, status: 1 });
+bookingSchema.index({ "approval.decisionMaker": 1, status: 1 });
 
 export type BookingDoc = InferSchemaType<typeof bookingSchema> & { _id: Types.ObjectId };
 

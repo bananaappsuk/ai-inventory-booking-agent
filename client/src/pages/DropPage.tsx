@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { bookingApi } from "../api/booking.api";
 import { dropApi } from "../api/pickupDrop.api";
 import { ChecklistItemRow } from "../components/checklist/ChecklistItemRow";
-import type { Booking, Photo } from "../types";
+import { inventoryItemId, type Booking, type Photo } from "../types";
 
 interface RowState {
   inventoryItem: string;
@@ -30,9 +30,10 @@ export function DropPage() {
       setBooking(b);
       setRows(
         b.items.map((line) => {
-          const pickup = b.pickup?.items.find((p) => p.inventoryItem === line.inventoryItem);
+          const lineId = inventoryItemId(line.inventoryItem);
+          const pickup = b.pickup?.items.find((p) => p.inventoryItem === lineId);
           return {
-            inventoryItem: line.inventoryItem,
+            inventoryItem: lineId,
             name: line.nameSnapshot,
             pickedUpQuantity: pickup?.quantityPickedUp ?? line.quantity,
             checked: false,

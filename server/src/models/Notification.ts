@@ -12,7 +12,9 @@ export const NOTIFICATION_TYPES = [
   "user_approved",
   "user_rejected",
   "booking_upcoming_reminder",
-  "drop_overdue_admin_alert"
+  "drop_overdue_admin_alert",
+  "booking_auto_approved",
+  "booking_auto_approved_admin_alert"
 ] as const;
 
 const notificationSchema = new Schema(

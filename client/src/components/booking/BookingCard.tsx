@@ -18,7 +18,10 @@ export function BookingCard({ booking, linkTo }: { booking: Booking; linkTo?: st
     <Link to={linkTo ?? `/bookings/${booking._id}`} className="booking-card">
       <div className="booking-card-header">
         <strong>{booking.eventTitle}</strong>
-        <span className={`badge status-${booking.status}`}>{STATUS_LABELS[booking.status]}</span>
+        <span>
+          <span className={`badge status-${booking.status}`}>{STATUS_LABELS[booking.status]}</span>
+          {booking.approval?.decisionMaker === "ai" && <span className="badge badge-ai">AI</span>}
+        </span>
       </div>
       <p className="muted">
         {new Date(booking.eventDate).toDateString()} &middot; {booking.session}

@@ -45,3 +45,25 @@ export const rejectUser = asyncHandler(async (req: Request, res: Response) => {
   const user = await authService.rejectUser(req.params.id);
   res.json(user);
 });
+
+export const listAllUsers = asyncHandler(async (_req: Request, res: Response) => {
+  const users = await authService.listAllUsers();
+  res.json(users);
+});
+
+export const activateUser = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) throw ApiError.unauthorized();
+  const user = await authService.setUserActive(req.params.id, true, req.user.id);
+  res.json(user);
+});
+
+export const deactivateUser = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) throw ApiError.unauthorized();
+  const user = await authService.setUserActive(req.params.id, false, req.user.id);
+  res.json(user);
+});
+
+export const adminCreateUser = asyncHandler(async (req: Request, res: Response) => {
+  const user = await authService.adminCreateUser(req.body);
+  res.status(201).json(user);
+});

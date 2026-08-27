@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { bookingApi } from "../api/booking.api";
 import { pickupApi } from "../api/pickupDrop.api";
 import { ChecklistItemRow } from "../components/checklist/ChecklistItemRow";
-import type { Booking, Photo } from "../types";
+import { inventoryItemId, type Booking, type Photo } from "../types";
 
 interface RowState {
   inventoryItem: string;
@@ -30,7 +30,7 @@ export function PickupPage() {
       setBooking(b);
       setRows(
         b.items.map((line) => ({
-          inventoryItem: line.inventoryItem,
+          inventoryItem: inventoryItemId(line.inventoryItem),
           name: line.nameSnapshot,
           bookedQuantity: line.quantity,
           checked: false,

@@ -9,7 +9,7 @@ export function NotificationBell() {
   return (
     <div className="notification-bell">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-label="Notifications">
-        Notifications
+        <span className="material-symbols-outlined">notifications</span>
         {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
       </button>
       {open && <NotificationPanel onClose={() => setOpen(false)} />}

@@ -22,6 +22,8 @@ export interface User {
   role: Role;
   phone?: string;
   status: UserStatus;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface Photo {
@@ -39,10 +41,22 @@ export interface InventoryItem {
   status: "active" | "hidden";
 }
 
+export interface PopulatedInventoryRef {
+  _id: string;
+  name: string;
+  category?: string;
+  images: Photo[];
+}
+
 export interface BookingItemLine {
-  inventoryItem: string;
+  inventoryItem: string | PopulatedInventoryRef;
   nameSnapshot: string;
   quantity: number;
+}
+
+/** `items.inventoryItem` may be a bare id string or a populated ref, depending on the endpoint. */
+export function inventoryItemId(ref: string | PopulatedInventoryRef): string {
+  return typeof ref === "string" ? ref : ref._id;
 }
 
 export interface PickupItem {
@@ -71,6 +85,47 @@ export interface DropApprovalItem {
   photos: Photo[];
 }
 
+export type RuleType = "min_prior_approvals" | "no_date_overlap" | "max_quantity_share" | "inventory_available";
+
+export interface RuleResult {
+  ruleType: RuleType;
+  passed: boolean;
+  detail: string;
+}
+
+export interface ApprovalRule {
+  _id: string;
+  ruleType: RuleType;
+  params: Record<string, number>;
+  enabled: boolean;
+  naturalLanguageText?: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AiAction =
+  | "auto_approved"
+  | "recommended_approve"
+  | "recommended_reject"
+  | "escalated"
+  | "error"
+  | "overridden";
+
+export interface AiActionLog {
+  _id: string;
+  bookingId: { _id: string; eventTitle: string } | string;
+  action: AiAction;
+  ruleResults: RuleResult[];
+  confidence?: number;
+  reason: string;
+  historySignal?: string;
+  model: string;
+  latencyMs?: number;
+  promptVersion?: string;
+  createdAt: string;
+}
+
 export interface Booking {
   _id: string;
   eventTitle: string;
@@ -80,7 +135,20 @@ export interface Booking {
   createdBy: string;
   status: BookingStatus;
   items: BookingItemLine[];
-  approval?: { decidedBy?: string; decidedAt?: string; note?: string };
+  approval?: {
+    decidedBy?: string;
+    decidedAt?: string;
+    note?: string;
+    decisionMaker?: "human" | "ai";
+    overriddenFrom?: BookingStatus;
+  };
+  ai?: {
+    recommendation?: "approve" | "reject";
+    confidence?: number;
+    reason?: string;
+    ruleResults: RuleResult[];
+    evaluatedAt?: string;
+  };
   pickup?: { performedBy?: string; performedAt?: string; overallNote?: string; items: PickupItem[] };
   drop?: { performedBy?: string; performedAt?: string; overallNote?: string; items: DropItem[] };
   dropApproval?: {

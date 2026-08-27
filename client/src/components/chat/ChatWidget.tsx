@@ -56,6 +56,7 @@ export function ChatWidget() {
   if (!open) {
     return (
       <button type="button" className="chat-fab" onClick={() => setOpen(true)}>
+        <span className="material-symbols-outlined">smart_toy</span>
         Ask assistant
       </button>
     );

@@ -4,7 +4,7 @@ import { bookingApi } from "../api/booking.api";
 import { dropApprovalApi } from "../api/dropApproval.api";
 import { ChecklistItemRow } from "../components/checklist/ChecklistItemRow";
 import { PhotoUploader } from "../components/common/PhotoUploader";
-import type { Booking, Condition, Photo } from "../types";
+import { inventoryItemId, type Booking, type Condition, type Photo } from "../types";
 
 interface RowState {
   inventoryItem: string;
@@ -39,9 +39,10 @@ export function AdminDropApprovalPage() {
       setBooking(b);
       setRows(
         b.items.map((line) => {
-          const drop = b.drop?.items.find((d) => d.inventoryItem === line.inventoryItem);
+          const lineId = inventoryItemId(line.inventoryItem);
+          const drop = b.drop?.items.find((d) => d.inventoryItem === lineId);
           return {
-            inventoryItem: line.inventoryItem,
+            inventoryItem: lineId,
             name: line.nameSnapshot,
             bookedQuantity: drop?.quantityReturned ?? line.quantity,
             condition: "",

@@ -77,7 +77,12 @@ export async function removePhoto(id: string, publicId: string) {
  * with status in pending/approved/picked_up (pending is a soft hold; drop_submitted excluded
  * because items are physically back once drop is submitted, ahead of admin sign-off).
  */
-export async function checkAvailability(params: { itemId: string; date: Date; session: "AM" | "PM" }) {
+export async function checkAvailability(params: {
+  itemId: string;
+  date: Date;
+  session: "AM" | "PM";
+  excludeBookingId?: string;
+}) {
   const item = await InventoryItem.findById(params.itemId);
   if (!item) throw ApiError.notFound("Inventory item not found");
 
@@ -90,7 +95,8 @@ export async function checkAvailability(params: { itemId: string; date: Date; se
     eventDate: { $gte: dayStart, $lt: dayEnd },
     session: params.session,
     status: { $in: ["pending", "approved", "picked_up"] },
-    "items.inventoryItem": params.itemId
+    "items.inventoryItem": params.itemId,
+    ...(params.excludeBookingId ? { _id: { $ne: params.excludeBookingId } } : {})
   });
 
   const booked = bookings.reduce((sum, booking) => {

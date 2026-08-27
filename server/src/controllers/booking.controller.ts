@@ -11,13 +11,14 @@ export const create = asyncHandler(async (req: Request, res: Response) => {
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized();
-  const { status, from, to, mine } = req.query as Record<string, string | undefined>;
+  const { status, from, to, mine, decisionMaker } = req.query as Record<string, string | undefined>;
   const bookings = await bookingService.listBookings({
     requester: req.user,
     status,
     from,
     to,
-    mine: mine === "true"
+    mine: mine === "true",
+    decisionMaker: decisionMaker === "human" || decisionMaker === "ai" ? decisionMaker : undefined
   });
   res.json(bookings);
 });
